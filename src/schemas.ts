@@ -657,6 +657,14 @@ export const AddToListInputSchema = z.object({
     .max(10)
     .optional()
     .describe("Score on a 0-10 scale (e.g. 8.5). Omit to leave unscored."),
+  notes: z
+    .string()
+    .max(1000)
+    .optional()
+    .describe(
+      "Private-list note saved on the entry, e.g. a 1-3 line summary of premise, genre and tone. " +
+        "Omit to leave existing notes unchanged; pass an empty string to clear them.",
+    ),
 });
 
 export type AddToListInput = z.infer<typeof AddToListInputSchema>;

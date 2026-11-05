@@ -185,7 +185,8 @@ export function registerWriteTools(server: FastMCP): void {
     description:
       "Add an anime or manga to your list with a status. " +
       "Use when the user wants to start watching, plan to watch, " +
-      "or mark a title as completed. Requires ANILIST_TOKEN. " +
+      "or mark a title as completed. Optionally saves a short note on the entry " +
+      "(e.g. a 1-3 line summary). Requires ANILIST_TOKEN. " +
       "Returns status, optional score, and entry ID.",
     parameters: AddToListInputSchema,
     annotations: {
@@ -208,6 +209,7 @@ export function registerWriteTools(server: FastMCP): void {
         };
         if (args.score !== undefined)
           variables.scoreRaw = Math.round(args.score * 10);
+        if (args.notes !== undefined) variables.notes = args.notes;
 
         const [data, scoreFmt] = await Promise.all([
           anilistClient.query<SaveMediaListEntryResponse>(

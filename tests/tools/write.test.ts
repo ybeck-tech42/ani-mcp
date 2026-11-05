@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { http, HttpResponse } from "msw";
 import { createTestClient } from "../helpers/server.js";
 import { mswServer } from "../helpers/msw.js";
 import {
@@ -124,6 +125,30 @@ describe("anilist_add_to_list", () => {
       score: 8,
     });
     expect(result).toContain("Score: 8/10");
+  });
+
+  it("sends notes only when provided", async () => {
+    const seen: Array<Record<string, unknown> | undefined> = [];
+    mswServer.use(
+      http.post("https://graphql.anilist.co", async ({ request }) => {
+        const body = (await request.clone().json()) as {
+          query?: string;
+          variables?: Record<string, unknown>;
+        };
+        if (!body.query?.includes("SaveMediaListEntry")) return undefined;
+        seen.push(body.variables);
+        return HttpResponse.json({
+          data: {
+            SaveMediaListEntry: { id: 51, mediaId: 10, status: "PLANNING", score: 0, progress: 0, progressVolumes: 0 },
+          },
+        });
+      }),
+    );
+    const note = "Dark fantasy about an elf mage after the hero's party. Slow, melancholic, cozy.";
+    await callTool("anilist_add_to_list", { mediaId: 10, status: "PLANNING", notes: note });
+    await callTool("anilist_add_to_list", { mediaId: 10, status: "PLANNING" });
+    expect(seen[0]?.notes).toBe(note);
+    expect(seen[1] && "notes" in seen[1]).toBe(false);
   });
 
   it("errors when ANILIST_TOKEN is missing", async () => {
